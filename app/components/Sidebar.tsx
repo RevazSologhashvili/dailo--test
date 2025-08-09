@@ -7,6 +7,7 @@ import UserCard from "./UserCard";
 import { useAppSelector } from "../store"; // path to your store
 import { useChatSelectors } from "../hooks/useChatActions"; // adjust if path differs
 import ChatBox from "./ChatBox";
+import { logoutHandler } from "../apis/LogoutHandler";
 
 export default function Sidebar() {
   const isAsideOpen = useAppSelector((state) => state.chat.isAsideOpen);
@@ -25,19 +26,35 @@ export default function Sidebar() {
     }
   }, [showLogoutModal]);
 
-  const handleLogout = () => {
-    // Add your logout logic here
-    console.log("User logged out");
+ const handleLogout = async () => {
+  try {
+    console.log("Logging out...");
+    
+    // Call the logout API
+    const success = await logoutHandler();
+    
+    if (success) {
+      console.log("User logged out successfully");
+      setShowLogoutModal(false);
+      router.push('/Login');
+    } else {
+      console.error("Logout failed - server returned error");
+      // Optionally show an error message to the user
+      // You might want to still redirect on failure depending on your app's needs
+      setShowLogoutModal(false);
+      router.push('/Login');
+    }
+  } catch (error) {
+    console.error("Logout error:", error);
+    // Handle the error - you might still want to redirect even if API fails
     setShowLogoutModal(false);
-     router.push('/Login');
-    // Example: redirect to login page
-    // window.location.href = '/login';
-  };
+    router.push('/Login');
+  }
+};
 
-  const handleLogoutCancel = () => {
-    setShowLogoutModal(false);
-  };
-
+const handleLogoutCancel = () => {
+  setShowLogoutModal(false);
+};
 
 
   return (

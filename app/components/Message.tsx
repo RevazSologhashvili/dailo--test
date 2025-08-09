@@ -1,14 +1,183 @@
 "use client";
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Message as MessageType } from "../store/slices/chatSlice";
 import Image from "next/image";
 import Link from "next/link";
 import { useChatSelectors } from "../hooks/useChatActions";
 import linkifyHtml from "linkify-html";
 import DOMPurify from 'dompurify';
+import { Play, Pause, X } from 'lucide-react';
 
+// Image Modal Component
+const ImageModal = ({ src, alt, isOpen, onClose }) => {
+  // useEffect(() => {
+  //   const handleEscape = (e) => {
+  //     if (e.key === 'Escape') onClose();
+  //   // Messenger-style Audio Player Component
+
+  //   if (isOpen) {
+  //     document.addEventListener('keydown', handleEscape);
+  //     document.body.style.overflow = 'hidden';
+  //   }
+
+  //   return () => {
+  //     document.removeEventListener('keydown', handleEscape);
+  //     document.body.style.overflow = 'unset';
+  //   };
+  // }}, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div className="relative max-w-[90vw] max-h-[90vh]">
+        <button
+          onClick={onClose}
+          className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors z-10"
+        >
+          <X className="w-8 h-8" />
+        </button>
+        <Image
+          src={src}
+          alt={alt}
+          width={1200}
+          height={800}
+          className="max-w-full max-h-[90vh] object-contain rounded-lg"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    </div>
+  );
+};
+const MessengerAudioPlayer = ({ src, type }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const updateTime = () => {
+      setCurrentTime(audio.currentTime);
+      setProgress((audio.currentTime / audio.duration) * 100 || 0);
+    };
+
+    const updateDuration = () => {
+      setDuration(audio.duration || 0);
+    };
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+      setProgress(0);
+    };
+
+    audio.addEventListener('timeupdate', updateTime);
+    audio.addEventListener('loadedmetadata', updateDuration);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('timeupdate', updateTime);
+      audio.removeEventListener('loadedmetadata', updateDuration);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, []);
+
+  const togglePlayPause = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play().catch(console.error);
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleProgressClick = (e) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickPercent = clickX / rect.width;
+    const newTime = clickPercent * duration;
+    
+    audio.currentTime = newTime;
+    setCurrentTime(newTime);
+    setProgress(clickPercent * 100);
+  };
+
+  const formatTime = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Generate static waveform bars (only once)
+  const [waveformHeights] = useState(() => 
+    Array.from({ length: 30 }, () => Math.random() * 16 + 6)
+  );
+
+  const waveformBars = waveformHeights.map((height, i) => {
+    const isActive = (i / 30) * 100 <= progress;
+    return (
+      <div
+        key={i}
+        className={`w-0.5 rounded-full ${
+          isActive ? 'bg-white' : 'bg-white/40'
+        }`}
+        style={{ height: `${height}px` }}
+      />
+    );
+  });
+
+  return (
+    <div className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 max-w-sm">
+      <audio ref={audioRef} src={src} preload="metadata">
+        {type && <source src={src} type={type} />}
+      </audio>
+      
+      {/* Play/Pause Button */}
+      <button
+        onClick={togglePlayPause}
+        className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors duration-200 flex-shrink-0"
+      >
+        {isPlaying ? (
+          <Pause className="w-4 h-4 text-white" />
+        ) : (
+          <Play className="w-4 h-4 text-white ml-0.5" />
+        )}
+      </button>
+
+      {/* Waveform Visualization */}
+      <div className="flex-1 flex flex-col gap-2">
+        <div 
+          className="flex items-end justify-between gap-0.5 h-6 cursor-pointer"
+          onClick={handleProgressClick}
+        >
+          {waveformBars}
+        </div>
+        
+        {/* Time Display */}
+        <div className="flex justify-between text-xs text-white/70">
+          <span>{formatTime(currentTime)}</span>
+          <span>{formatTime(duration)}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function Message({ message }: { message: MessageType }) {
+  const [selectedImage, setSelectedImage] = useState(null);
   const isAgent = message.sender_type === "human";
   const isCustomer = message.sender_type === "client";
   const isAI = message.sender_type === "ai"
@@ -121,7 +290,62 @@ const processMessage = (text: string) => {
   className="text-white text-[14px]"
   dangerouslySetInnerHTML={{ __html: processMessage(message.content) }}
 />
-          
+  
+
+{message.attachments && message.attachments.length > 0 && (
+  <div className="mt-3 space-y-2">
+    {message.attachments.map((attachment) => {
+      const fileType = attachment.content_type || ""; // Use mime_type if available
+      const isImage = fileType.startsWith("image/");
+      const isAudio = fileType.startsWith("audio/");
+      const isOther = !isImage && !isAudio;
+
+      return (
+        <div key={attachment.id} className="rounded overflow-hidden">
+          {isImage && (
+            <Image
+              src={attachment.url}
+              alt={attachment.name || "Image"}
+              width={300}
+              height={200}
+              className="rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => setSelectedImage({ src: attachment.url, alt: attachment.name || "Image" })}
+            />
+          )}
+
+          {isAudio && (
+            <MessengerAudioPlayer 
+              src={attachment.url} 
+              type={fileType} 
+            />
+          )}
+
+          {isOther && (
+            // <a
+            //   href={attachment.url}
+            //   download
+            //   className="text-blue-400 hover:underline"
+            // >
+            //   {attachment.name || "Download Attachment"}
+            // </a>
+        <a
+  href={`/apis/download?url=${encodeURIComponent(attachment.url)}`}
+  className="text-blue-400 hover:underline"
+>
+  {attachment.name || "Download Attachment"}
+</a>
+
+
+          )}
+        </div>
+      );
+    })}
+  </div>
+)}
+
+
+
+
           <div className="flex justify-end mt-2">
          <span className="text-[10px] text-gray-300 select-none">
   {(() => {
@@ -149,6 +373,14 @@ const processMessage = (text: string) => {
           </div>
         </div>
       </div>
+
+      {/* Image Modal */}
+      <ImageModal 
+        src={selectedImage?.src}
+        alt={selectedImage?.alt}
+        isOpen={!!selectedImage}
+        onClose={() => setSelectedImage(null)}
+      />
     </>
   );
 }

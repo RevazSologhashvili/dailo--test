@@ -30,6 +30,12 @@ export interface Message {
   timestamp?: string;
   is_read?: boolean;
   message_type?: "text" | "image" | "file";
+  attachments?: {
+    "id": number,
+     "url": string,
+     "content_type": string,
+     "name": string
+  }[]
 }
 
 export type WebSocketMessage =
