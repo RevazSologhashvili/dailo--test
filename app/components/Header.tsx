@@ -48,12 +48,12 @@ export default function Header() {
     ? `${selectedChat.assigned_to_fn} ${selectedChat.assigned_to_ln}`
     : null;
 
-  const initials = selectedChat.customer_name
+  const initials = selectedChat.customer_name ? selectedChat.customer_name
     .split(" ")
     .map((n) => n[0])
     .join("")
     .substring(0, 2)
-    .toUpperCase();
+    .toUpperCase() : "UU";
 
   const iconSrc = `/${selectedChat.page_type.toLowerCase()}.png`;
 
@@ -90,7 +90,7 @@ export default function Header() {
             {initials}
           </span>
           <div>
-            <h2 className="text-white font-semibold">{selectedChat.customer_name}</h2>
+            <h2 className="text-white font-semibold">{selectedChat.customer_name || "Unknown User"}</h2>
             <div className="flex items-center gap-2">
               <Image
                 src={iconSrc}

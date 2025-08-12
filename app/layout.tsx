@@ -26,12 +26,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <UserProvider>
           {children}
         </UserProvider>
+        <script async src="https://testwidget.dailo.ai/widget.js" data-client-key="uWKgosmm7Q3tVcElrArBsBVGTqDhRL8y" data-theme="forest"></script>
       </body>
     </html>
   );

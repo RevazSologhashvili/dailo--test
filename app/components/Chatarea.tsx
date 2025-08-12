@@ -1,3 +1,5 @@
+
+
 "use client";
 import React, { useRef, useEffect } from "react";
 import Message from "./Message";
@@ -24,13 +26,15 @@ export default function Chatarea() {
       {/* Scrollable container with ref */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto space-y-3 p-6 max-w-7xl mx-auto w-full scrollbar-thin-gray"
-        style={{ minHeight: 0 }} // This is crucial for flex containers
+        className="flex-1 overflow-y-auto p-6 max-w-7xl mx-auto w-full scrollbar-thin-gray"
+        style={{ minHeight: 0 }}
       >
-        <div className="flex flex-col justify-end min-h-full">
+        <div className="flex flex-col space-y-3">
           {messages.map((msg) => (
             <Message key={msg.id} message={msg} />
           ))}
+          {/* Spacer to allow extra scroll room */}
+          <div style={{ height: "120px" }} />
         </div>
       </div>
       {/* Message input */}
@@ -38,3 +42,4 @@ export default function Chatarea() {
     </div>
   );
 }
+

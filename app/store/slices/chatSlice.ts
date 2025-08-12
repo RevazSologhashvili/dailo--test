@@ -115,6 +115,8 @@ const chatSlice = createSlice({
       state.currentUserId = action.payload;
     },
 
+
+
   chatToAi: (state, action) => {
   const { chatId } = action.payload;
 
@@ -394,10 +396,16 @@ addChat: (state, action: PayloadAction<Chat>) => {
 
     // WebSocket event handlers
     handleWebSocketMessage: (state, action: PayloadAction<WebSocketMessage>) => {},
+
+  sendIsTypingOn: (state, action: PayloadAction<{ chatId: string }>) => {},
+sendIsTypingOff: (state, action: PayloadAction<{ chatId: string }>) => {}
+
   },
 });
 
 export const {
+  sendIsTypingOn,
+  sendIsTypingOff,
   setCurrentUserId,
   toggleAssignmentFilter,
   assignChatToUser,

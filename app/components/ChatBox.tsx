@@ -70,7 +70,7 @@ const ChatBox = memo(function ChatBox({ chat }: { chat: Chat }) {
     if (chat.assigned_to && chat.assigned_to_fn && chat.assigned_to_ln) {
       return getInitials(`${chat.assigned_to_fn} ${chat.assigned_to_ln}`);
     }
-    return "";
+    return getInitials("Unknown User");
   };
 
   return (
@@ -85,7 +85,7 @@ const ChatBox = memo(function ChatBox({ chat }: { chat: Chat }) {
       <div className="flex items-center justify-between">
         {/* Customer initials circle */}
         <div className="relative w-10 h-10 font-medium flex items-center justify-center text-center bg-gray-600 rounded-full text-white shrink-0">
-          {getInitials(chat.customer_name)}
+          {getInitials(chat.customer_name || "Unknown User")}
 
           {/* Assigned user initials overlay */}
           {chat.assigned_to && (
@@ -97,8 +97,8 @@ const ChatBox = memo(function ChatBox({ chat }: { chat: Chat }) {
 
         {/* Chat info: customer name and page */}
         <div className="flex flex-col gap-1 flex-grow mx-3 overflow-hidden">
-          <p className="font-medium text-sm truncate" title={chat.customer_name}>
-            {chat.customer_name}
+          <p className="font-medium text-sm truncate" title={chat.customer_name || "Unknown User" }>
+            {chat.customer_name || "Unknown User"}
           </p>
           <span className="text-xs text-gray-400 flex items-center gap-2">
             <Image
